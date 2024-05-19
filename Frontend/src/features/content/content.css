@@ -109,3 +109,13 @@ body {
     background-color: #f44336;
   }
   
+  .table-container .attribute-table .cell-content {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  
+  .table-container .attribute-table .cell-content i {
+    cursor: pointer;
+    margin-left: 10px;
+  }

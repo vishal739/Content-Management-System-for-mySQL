@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { fetchEntity, createEntity, updateEntity, deleteEntity } from "./contentAPI";
+import { fetchEntity, createEntity, updateEntity, deleteEntity } from "./entityAPI";
 
 const initialState = {
   value: 0,
@@ -8,15 +8,18 @@ const initialState = {
 
 
 export const fetchEntityAsync = createAsyncThunk(
-  "content/fetchEntity",
+  "entity/fetchEntity",
   async () => {
+    console.log("calledFetchEntity");
     const response = await fetchEntity();
+    console.log("FetchEntityAsync: ",response.data);
     // The value we return becomes the `fulfilled` action payload
     return response.data;
   }
 );
+
 export const createEntityAsync = createAsyncThunk(
-  "content/createEntity",
+  "entity/createEntity",
   async (entity) => {
     const response = await createEntity(entity);
     console.log("createAsync: ",response);
@@ -25,7 +28,7 @@ export const createEntityAsync = createAsyncThunk(
   }
 );
 export const updateEntityAsync = createAsyncThunk(
-  "content/updateEntity",
+  "entity/updateEntity",
   async (entity) => {
     const response = await updateEntity(entity);
     console.log("updateAsync: ",response);
@@ -34,17 +37,17 @@ export const updateEntityAsync = createAsyncThunk(
   }
 );
 export const deleteEntityAsync = createAsyncThunk(
-  "content/deleteEntity",
-  async (id) => {
-    const response = await deleteEntity(id);
+  "entity/deleteEntity",
+  async (entity) => {
+    const response = await deleteEntity(entity);
     console.log("deleteAsync: ",response);
     // The value we return becomes the `fulfilled` action payload
     return response.data;
   }
 );
 
-export const contentSlice = createSlice({
-  name: "content",
+export const entitySlice = createSlice({
+  name: "entity",
   initialState,
   // The `reducers` field lets us define reducers and generate associated actions
   reducers: {
@@ -60,7 +63,7 @@ export const contentSlice = createSlice({
       })
       .addCase(fetchEntityAsync.fulfilled, (state, action) => {
         state.status = "idle";
-        state.entities= action.payload;
+        state.entities= action.payload.data;
       })
       .addCase(createEntityAsync.pending, (state) => {
         state.status = "loading";
@@ -68,15 +71,18 @@ export const contentSlice = createSlice({
       .addCase(createEntityAsync.fulfilled, (state, action) => {
         state.status = "idle";
         console.log("action",action.payload);
-        state.entities.push(action.payload);
+        const data={"Tables_in_vahan_db" : action.payload.data}
+        state.entities.push(data);
       })
       .addCase(updateEntityAsync.pending, (state) => {
         state.status = "loading";
       })
       .addCase(updateEntityAsync.fulfilled, (state, action) => {
         state.status = "idle";
-        const ind= state.entities.findIndex(item => item.id==action.payload.id);
-        state.entities[ind]=action.payload;
+        console.log("updatecheckasync: ",action.payload)
+        const ind= state.entities.findIndex(item=>item.Tables_in_vahan_db===action.payload.oldName);
+        const data={"Tables_in_vahan_db" : action.payload.newName}
+        state.entities[ind]=data;
         // state.entities.push(action.payload);
       })
       .addCase(deleteEntityAsync.pending, (state) => {
@@ -84,19 +90,20 @@ export const contentSlice = createSlice({
       })
       .addCase(deleteEntityAsync.fulfilled, (state, action) => {
         state.status = "idle";
-        const index= state.entities.findIndex(item=>item.id===action.payload.id);
+        console.log("deletecheckasync: ",action.payload.entity)
+        const index= state.entities.findIndex(item=>item.Tables_in_vahan_db===action.payload.entity);
         state.entities.splice(index,1);
       });
   },
 });
 
-export const { increment } = contentSlice.actions;
+export const { increment } = entitySlice.actions;
 
 
-export const selectEntity = (state) => state.content.entities;
+export const selectEntity = (state) => state.entity.entities;
 
 
-export default contentSlice.reducer;
+export default entitySlice.reducer;
 
 // const fetchEntities = async () => {
 //   // try {

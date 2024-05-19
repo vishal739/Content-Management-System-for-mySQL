@@ -1,39 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import  { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form"
 import "./content.css"
-import { createEntityAsync, deleteEntityAsync, fetchEntityAsync, selectEntity, updateEntityAsync } from './contentSlice';
 import { useDispatch, useSelector } from "react-redux"
-// const Entities = [
-//   {
-//     "id": "1",
-//     "name": "Person",
-//     "attributes": [
-//       {
-//         "name": "Name",
-//         "type": "string"
-//       },
-//       {
-//         "name": "Age",
-//         "type": "number"
-//       }
-//     ]
-//   },
-//   {
-//     "id": "2",
-//     "name": "Student",
-//     "attributes": [
-//       {
-//         "name": "Name",
-//         "type": "string"
-//       },
-//       {
-//         "name": "phone",
-//         "type": "number"
-//       }
-//     ]
-//   }
-// ]
+import { createEntityAsync, fetchEntityAsync, deleteEntityAsync, selectEntity, updateEntityAsync } from '../Entity/entitySlice';
+import { createAttributeAsync, deleteAttributeAsync, fetchAttributeAsync, selectAttribute, updateAttributeAsync } from '../Attribute/attributeSlice';
+import { createTableDataAsync, deleteTableDataAsync, fetchTableDataAsync, selectTableData, updateTableDataAsync } from '../tableData/tableDataSlice';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 
 function Content() {
 
@@ -44,118 +17,186 @@ function Content() {
     formState: { errors },
   } = useForm()
   const [entityName, setEntityName] = useState('');
+  const [openUpdateEntity, setOpenUpdateEntity] = useState('');
   const [openAddAttribute, setOpenAddAttribute] = useState('');
   const [openAttributeDetails, setOpenAttributeDetails] = useState('');
   const [updateAttributeIndex, setUpdateAttributeIndex] = useState(-1);
+  const [openUpdateAttribute, setOpenUpdateAttribute] = useState('');
+  const [updateEntityName, setUpdateEntityName] = useState('');
   const [openInsert, setOpenInsert] = useState('');
   const [openData, setOpenData] = useState('');
+  const [openUpdateTableData, setOpenUpdateTableData] = useState('');
+  const [updateIndexTableData, setUpdateIndexTableData] = useState(-1);
   const entities = useSelector(selectEntity);
+  const attributes = useSelector(selectAttribute);
+  const tableData = useSelector(selectTableData);
   const dispatch = useDispatch();
 
   useEffect(() => {
+    // console.log("useEffect");
     dispatch(fetchEntityAsync());
+    // reset()
   }, [dispatch]);
 
 
   const handleCancelBox = () => {
     setOpenAddAttribute('');
     setUpdateAttributeIndex(-1);
+    setOpenUpdateAttribute('');
+    setOpenInsert('');
+    setOpenUpdateEntity('');
+    setUpdateIndexTableData(-1);
+    setOpenUpdateTableData('');
     reset();
   }
-  const id = Math.floor(Math.random() * 1000000);
 
+  //---------------------->Operations for Entity<--------------------------
   const handleCreateEntity = () => {
-    // createEntity();
-    // setEntities([...entities, { name: entityName }]);
     const newData = {
-      "id": `${id}`,
-      "name": `${entityName}`,
-      "attributes": [],
-      "tableData": []
+      "entity": `${entityName}`
     }
     dispatch(createEntityAsync(newData));
     setEntityName('');
-    // setAttributes([]);
   };
+  const HandleDeleteEntity = (name) => {
+    const data = { "entity": name }
+    dispatch(deleteEntityAsync(data));
+  }
+  const HandleUpdateEntity = () => {
+    const data = { "oldName": openUpdateEntity, "newName": updateEntityName };
+    dispatch(updateEntityAsync(data));
+  }
+
+  //---------------------->Operations for Attribute<--------------------------
+  const handleAddAttribute = (entity) => {
+    if (entity.Tables_in_vahan_db == openAddAttribute) {
+      setOpenAddAttribute('');
+    } else {
+      setOpenAddAttribute(entity.Tables_in_vahan_db);
+    }
+    setOpenInsert('');
+  }
+  const typeFormater = (type) => {
+    if (type == 'text') {
+      //for now added a fixed size of varchar
+      return 'varchar(50)';
+    } else if (type == 'number') {
+      return 'int';
+    } else if (type == 'date') {
+      return 'date';
+    } else if (type == 'boolean') {
+      return 'bool';
+    }
+  }
+  const handleAttributeSubmit = (entity, data) => {
+    const newData = {
+      entity: entity.Tables_in_vahan_db,
+      name: data.name,
+      type: typeFormater(data.type)
+    };
+    console.log(newData);
+    dispatch(createAttributeAsync(newData));
+  }
+
+  const handleAttributeUpdateSubmit = (entity, data) => {
+    console.log("attributeUpdateSubmit: ", entity, data)
+    const newData = {
+      entity: entity.Tables_in_vahan_db,
+      oldName: attributes[updateAttributeIndex].COLUMN_NAME,
+      newName: data.name,
+      type: typeFormater(data.type)
+    };
+    console.log(newData);
+    dispatch(updateAttributeAsync(newData));
+  }
+
+  const handleFetchAttribute = (entityName) => {
+    console.log("fetchingAttributeDetails: ", entityName);
+    dispatch(fetchAttributeAsync(entityName));
+    if (entityName == openAttributeDetails) {
+      setOpenAttributeDetails('');
+    } else {
+      setOpenAttributeDetails(entityName);
+    }
+    setOpenAddAttribute('');
+    setOpenInsert('');
+  }
 
   const handleDeleteAttribute = (entity, index) => {
-    console.log("deleteattributeL: ", entity);
-    const attribute = [...entity.attributes];
-    attribute.splice(index, 1);
-    dispatch(updateEntityAsync({ ...entity, "attributes": [...attribute] }));
-    reset();
+    const newData = {
+      "entity": entity.Tables_in_vahan_db,
+      "attribute": attributes[index].COLUMN_NAME
+    }
+    console.log(newData);
+    dispatch(deleteAttributeAsync(newData));
   }
 
   const handleUpdateAttribute = (entity, index) => {
     setUpdateAttributeIndex(index);
-    setOpenAddAttribute(entity.name);
+    setOpenUpdateAttribute(entity.Tables_in_vahan_db);
+  }
+   //---------------------->Operations for TableData<--------------------------
+  const handleInsertOpen = (entity) => {
+    dispatch(fetchAttributeAsync(entity.Tables_in_vahan_db));
+    if (entity.Tables_in_vahan_db == openInsert) {
+      setOpenInsert('');
+    } else {
+      setOpenInsert(entity.Tables_in_vahan_db);
+    }
+    setOpenAddAttribute('');
+    setOpenAttributeDetails('');
   }
 
-  const handleFormSubmit = (entity, data) => {
-    console.log("handleForm: ", entity, data);
-    const attribute = { ...entity, "attributes": [...entity.attributes] }
-    console.log("handleAttribute: ", attribute);
-    if (updateAttributeIndex != -1) {
-      attribute.attributes[updateAttributeIndex] = data;
-    } else {
-      attribute.attributes.push(data);
-    }
-    console.log(attribute);
-    dispatch(updateEntityAsync(attribute));
-    reset();
-    // setOpenAddAttribute('');
-  }
   const handleInsertSubmit = (entity, data) => {
     console.log("data to be inserted: ", data);
-    const entityData = { ...entity, "tableData": [...entity.tableData, data] }
-    dispatch(updateEntityAsync(entityData));
-  }
-  const HandleDeleteEntity = (id) => {
-    dispatch(deleteEntityAsync(id));
-  }
-
-  const handleOpen = (open, entity, index) => {
-    if (open == "addAttribute") {
-      if (entity.name == openAddAttribute) {
-        setOpenAddAttribute('');
-      } else {
-        setOpenAddAttribute(entity.name);
-      }
-      // setOpenAttributeDetails('');
-      setOpenInsert('');
-    } else if (open == "showAttribute") {
-
-      if (entity.name == openAttributeDetails) {
-        setOpenAttributeDetails('');
-      } else {
-        setOpenAttributeDetails(entity.name);
-      }
-      setOpenAddAttribute('');
-      setOpenInsert('');
-    } else if (open == "insertData") {
-      if (entity.name == openInsert) {
-        setOpenInsert('');
-      } else {
-        setOpenInsert(entity.name);
-      }
-      setOpenAddAttribute('');
-      setOpenAttributeDetails('');
-    } else if (open == "showData") {
-      if (entity.name == openData) {
-        setOpenData('');
-      } else {
-        setOpenData(entity.name);
-      }
-      setOpenAddAttribute('');
-      setOpenAttributeDetails('');
+    const newData = {
+      entity: entity.Tables_in_vahan_db,
+      data: data,
     }
+    console.log("newDataInsert: ", newData)
+    dispatch(createTableDataAsync(newData));
+    reset();
+  }
+ 
+  const handleShowData = (entity) => {
+    dispatch(fetchAttributeAsync(entity.Tables_in_vahan_db));
+    dispatch(fetchTableDataAsync(entity.Tables_in_vahan_db));
+    if (entity.Tables_in_vahan_db == openData) {
+      setOpenData('');
+    } else {
+      setOpenData(entity.Tables_in_vahan_db);
+    }
+    setOpenAddAttribute('');
+    setOpenAttributeDetails('');
   }
 
-  const handleUpdateRow = (entity, index) => {
-
+  const handleUpdateRow = (entity, rind,cind) => {
+    console.log("updatetable: ", entity,  tableData[rind][cind]);
+    setOpenUpdateTableData(entity.Tables_in_vahan_db);
+    setUpdateIndexTableData({"rind": rind,"cind": cind});
   }
-  const handleDeleteRow = (entity, index) => {
+  const handleDeleteRow = (entity, data, index) => {
+    console.log("deleteRow: ", entity, data, index);
+    const newData = {
+      "entity": entity.Tables_in_vahan_db,
+      "condValue": data.id,
+      "index": index
+    }
+    dispatch(deleteTableDataAsync(newData));
+  }
 
+  const handleTableDataUpdateSubmit = (entity, data) => {
+    const val= Object.values(data);
+    const len= val.length;
+    const newData = {
+      "entity": entity.Tables_in_vahan_db,
+      "attribute": updateIndexTableData.cind,
+      "value": val[len-1],
+      "condValue": tableData[updateIndexTableData.rind].id,
+      "index": updateIndexTableData.rind
+    }
+    dispatch(updateTableDataAsync(newData));
+    reset()
   }
   return (
     <div className="App">
@@ -173,20 +214,71 @@ function Content() {
       <div>
         <h2>Entities</h2>
         <ul>
-          {/* {console.log("entity: ", entities)} */}
-          {entities.map((entity, index) => (
+          {entities ? entities.map((entity, index) => (
             <li key={index}>
               <div className='entity-title'>
                 <h2>
-                  {entity.name}
+                  {entity.Tables_in_vahan_db}
                 </h2>
-                <button onClick={() => handleOpen("addAttribute", entity, index)}>Add Attribute</button>
-                <button onClick={() => handleOpen("showAttribute", entity, index)}>Show Attribute</button>
-                <button onClick={() => handleOpen("insertData", entity, index)}>Insert data</button>
-                <button onClick={() => handleOpen("showData", entity, index)}>Show Data</button>
-                <button onClick={() => HandleDeleteEntity(entity.id)}>Delete Entity</button>
+                <button onClick={() => setOpenUpdateEntity(entity.Tables_in_vahan_db)}>Edit Name</button>
+                <button onClick={() => HandleDeleteEntity(entity.Tables_in_vahan_db)}>Delete Entity</button>
+                <button onClick={() => handleAddAttribute(entity)}>Add Attribute</button>
+                <button onClick={() => handleFetchAttribute(entity.Tables_in_vahan_db)}>Show Attribute</button>
+                <button onClick={() => handleInsertOpen(entity)}>Insert data</button>
+                <button onClick={() => handleShowData(entity)}>Show Data</button>
               </div>
-              {openInsert == entity.name &&
+              {openUpdateEntity == entity.Tables_in_vahan_db &&
+                <div>
+                  <h2>Update Name</h2>
+                  <input
+                    type="text"
+                    placeholder="Entity Name"
+                    value={updateEntityName}
+                    onChange={(e) => setUpdateEntityName(e.target.value)}
+                  />
+                  <button onClick={HandleUpdateEntity}>save</button>
+                  <button type="button" className="cancel-button" onClick={handleCancelBox}>
+                      Cancel
+                    </button>
+                </div>
+              }
+
+              {openData == entity.Tables_in_vahan_db ?
+                <div className="table-container">
+                  <h3>Table Data</h3>
+                  <table className="attribute-table">
+                    <thead>
+                      <tr>
+                        {attributes.map((label, index) => (
+                          <th key={index}>{label.COLUMN_NAME}</th>
+                        ))}
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tableData && tableData.map((data, rind) => (
+                        <tr key={rind}>
+                          {attributes.map((key, cind) => {
+                            return <td key={cind}><div className="cell-content">
+                              <span>{data[key.COLUMN_NAME]}</span>
+                              <i className="fas fa-edit" onClick={() => handleUpdateRow(entity, rind,key.COLUMN_NAME)}></i>
+                            </div></td>
+                          })}
+                          <td>
+                            {/* <button className="save-button" onClick={() => handleUpdateRow(entity, data)}>Update</button> */}
+                            <button className="cancel-button" onClick={() => handleDeleteRow(entity, data, rind)}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+
+                    </tbody>
+
+                  </table>
+
+                </div> : ''
+              }
+
+              {openInsert == entity.Tables_in_vahan_db &&
                 <div className="table-container">
                   <h3>Insert Data</h3>
                   <form noValidate onSubmit={handleSubmit((data) => handleInsertSubmit(entity, data))} method="POST">
@@ -198,16 +290,17 @@ function Content() {
                         </tr>
                       </thead>
                       <tbody>
-                        {entity.attributes.map((attribute, index) => (
+                        {/* {console.log("attributeIndexCheck: ", attributes)} */}
+                        {attributes.map((attribute, index) => (
                           <tr key={index}>
-                            <td>{attribute.name}</td>
+                            <td>{attribute.COLUMN_NAME}</td>
                             <td>
                               <input
                                 className="attribute-input"
-                                placeholder={attribute.name}
-                                type={attribute.type}
-                                {...register(`${attribute.name}`)}
-                                required
+                                placeholder={attribute.COLUMN_NAME}
+                                type={attribute.DATA_TYPE}
+                                {...register(`${attribute.COLUMN_NAME}`, { required: 'Please enter value' })}
+
                               />
                             </td>
 
@@ -222,39 +315,47 @@ function Content() {
                     </button>
 
                   </form>
-                </div>}
-              {openData == entity.name ?
+                </div>
+              }
+
+              {openUpdateTableData == entity.Tables_in_vahan_db &&
                 <div className="table-container">
-                  <h3>Table Data</h3>
-                  <table className="attribute-table">
-                    <thead>
-                      <tr>
-                        {entity.attributes.map((label, index) => (
-                          <th key={index}>{label.name}</th>
-                        ))}
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {entity.tableData.map((data, rind) => (
-                        <tr key={rind}>
-                          {entity.attributes.map((key, cind) => {
-                            { console.log(data[key.name]) }
-                            return <td key={cind}>{data[key.name]}</td>
-                          })}
-                          <td>
-                            <button className="save-button" onClick={() => handleUpdateRow(entity, index)}>Update</button>
-                            <button className="cancel-button" onClick={() => handleDeleteRow(entity, index)}>Delete</button>
+                  <h3>Update TableData</h3>
+                  <form noValidate onSubmit={
+                    handleSubmit((data) => handleTableDataUpdateSubmit(entity, data))
+                    } method="POST">
+                    <table className="attribute-table">
+                      <thead>
+                        <tr>
+                          <th>{updateIndexTableData["cind"]}</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          {console.log("indexData: ",updateIndexTableData, tableData[updateIndexTableData])}
+                          
+                            <td>
+                              <input
+                                type="text"
+                                // placeholder={label.COLUMN_NAME}
+                                {...register(`${updateIndexTableData["cind"]}`)}
+                              defaultValue={updateIndexTableData !== -1 ? tableData[updateIndexTableData.rind][updateIndexTableData.cind] : ''}
+                              />
+                            </td>
+                          <td >
+                            <button type="submit" className="save-button">Save</button>
+                            <button type="button" className="cancel-button" onClick={handleCancelBox}>
+                              Cancel
+                            </button>
                           </td>
                         </tr>
-                      ))}
-
-                    </tbody>
-
-                  </table>
-
-                </div> : ''}
-              {openAttributeDetails == entity.name ?
+                      </tbody>
+                    </table>
+                  </form>
+                </div>
+              }
+              {openAttributeDetails == entity.Tables_in_vahan_db ?
                 <div className="table-container">
                   <h3>Attribute Details</h3>
                   <table className="attribute-table">
@@ -266,10 +367,10 @@ function Content() {
                       </tr>
                     </thead>
                     <tbody>
-                      {entity.attributes.map((attribute, index) => (
+                      {attributes.map((attribute, index) => (
                         <tr key={index}>
-                          <td>{attribute.name}</td>
-                          <td>{attribute.type}</td>
+                          <td>{attribute.COLUMN_NAME}</td>
+                          <td>{attribute.DATA_TYPE}</td>
                           <td>
                             <button className="save-button" onClick={() => handleUpdateAttribute(entity, index)}>Update</button>
                             <button className="cancel-button" onClick={() => handleDeleteAttribute(entity, index)}>Delete</button></td>
@@ -277,34 +378,14 @@ function Content() {
                       ))}
                     </tbody>
                   </table>
-                </div> : ''}
-              {openAddAttribute == entity.name &&
-                // <form noValidate onSubmit={handleSubmit((data) => handleFormSubmit(entity, data))} method="POST">
-                //   <div>
-                //     <input
-                //       type="text"
-                //       placeholder="Attribute Name"
-                //       {...register("name")}
-                //       defaultValue={updateAttributeIndex !== -1 ? entity.attributes[updateAttributeIndex].name : ''}
+                </div> : ''
+              }
+              {/* {console.log("hello: ", openAddAttribute, entity.Tables_in_vahan_db)} */}
 
-                //     />
-                //     <select
-                //       name="type"
-                //       {...register("type")}
-                //       defaultValue={updateAttributeIndex !== -1 ? entity.attributes[updateAttributeIndex].type : ''}
-                //     >
-                //       <option value="string">String</option>
-                //       <option value="number">Number</option>
-                //       <option value="date">Date</option>
-                //       <option value="bool">Boolean</option>
-                //     </select>
-                //     <button>Save</button>
-                //     <button onClick={handleCancelBox}>Cancel</button>
-                //   </div>
-                // </form>
+              {openAddAttribute == entity.Tables_in_vahan_db &&
                 <div className="table-container">
                   <h3>Add attribute</h3>
-                  <form noValidate onSubmit={handleSubmit((data) => handleFormSubmit(entity, data))} method="POST">
+                  <form noValidate onSubmit={handleSubmit((data) => handleAttributeSubmit(entity, data))} method="POST">
                     <table className="attribute-table">
                       <thead>
                         <tr>
@@ -320,19 +401,19 @@ function Content() {
                               type="text"
                               placeholder="Attribute Name"
                               {...register("name")}
-                              defaultValue={updateAttributeIndex !== -1 ? entity.attributes[updateAttributeIndex].name : ''}
+                              defaultValue={updateAttributeIndex !== -1 ? attributes[updateAttributeIndex].COLUMN_NAME : ''}
                             />
                           </td>
                           <td>
                             <select
                               name="type"
                               {...register("type")}
-                              defaultValue={updateAttributeIndex !== -1 ? entity.attributes[updateAttributeIndex].type : ''}
+                              defaultValue={updateAttributeIndex !== -1 ? attributes[updateAttributeIndex].DATA_TYPE : ''}
                             >
                               <option value="text">Text</option>
                               <option value="number">Number</option>
                               <option value="date">Date</option>
-                              <option value="bool">Boolean</option>
+                              <option value="boolean">Boolean</option>
                             </select>
                           </td>
                           <td>
@@ -346,35 +427,57 @@ function Content() {
                     </table>
                   </form>
                 </div>
-
+              }
+              {openUpdateAttribute == entity.Tables_in_vahan_db &&
+                <div className="table-container">
+                  <h3>Update attribute</h3>
+                  <form noValidate onSubmit={handleSubmit((data) => handleAttributeUpdateSubmit(entity, data))} method="POST">
+                    <table className="attribute-table">
+                      <thead>
+                        <tr>
+                          <th>Attribute Name</th>
+                          <th>Type</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>
+                            <input
+                              type="text"
+                              placeholder="Attribute Name"
+                              {...register("name")}
+                              defaultValue={updateAttributeIndex !== -1 ? attributes[updateAttributeIndex].COLUMN_NAME : ''}
+                            />
+                          </td>
+                          <td>
+                            <select
+                              name="type"
+                              {...register("type")}
+                              defaultValue={updateAttributeIndex !== -1 ? attributes[updateAttributeIndex].DATA_TYPE : ''}
+                            >
+                              <option value="text">Text</option>
+                              <option value="number">Number</option>
+                              <option value="date">Date</option>
+                              <option value="boolean">Boolean</option>
+                            </select>
+                          </td>
+                          <td>
+                            <button type="submit" className="save-button">Save</button>
+                            <button type="button" className="cancel-button" onClick={handleCancelBox}>
+                              Cancel
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </form>
+                </div>
               }
             </li>
-          ))}
+          )) : ''}
         </ul>
       </div>
-      {/* {selectedEntity && (
-        <div>
-          <h2>{selectedEntity.name}</h2>
-          <table>
-            <thead>
-              <tr>
-                {Object.keys(selectedEntity.attributes).map((attribute) => (
-                  <th key={attribute}>{attribute}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {selectedEntity.data.map((dataItem, index) => (
-                <tr key={index}>
-                  {Object.values(dataItem).map((value, index) => (
-                    <td key={index}>{value}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )} */}
     </div >
   );
 }

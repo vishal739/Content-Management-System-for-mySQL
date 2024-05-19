@@ -1,47 +1,6 @@
 {
   "entities": [
     {
-      "id": "985156",
-      "name": "student",
-      "attributes": [
-        {
-          "name": "phone",
-          "type": "text"
-        },
-        {
-          "age": "",
-          "phone": "",
-          "name": "name",
-          "type": "text"
-        }
-      ],
-      "tableData": [
-        {
-          "name": "Vishal",
-          "age": "22"
-        },
-        {
-          "name": "bikash",
-          "age": "23"
-        },
-        {
-          "name": "Sumit",
-          "age": "24"
-        },
-        {
-          "name": "vishal",
-          "type": "text",
-          "age": "23"
-        },
-        {
-          "name": "",
-          "type": "text",
-          "age": "26",
-          "phone": "8777021460"
-        }
-      ]
-    },
-    {
       "id": "314091",
       "name": "Employee",
       "attributes": [

@@ -1,8 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
-import contentReducer  from "../features/content/contentSlice"
-
+import entityReducer  from "../features/Entity/entitySlice"
+import attributeReducer from "../features/Attribute/attributeSlice"
+import tableDataReducer from "../features/tableData/tableDataSlice"
 export const store = configureStore({
   reducer: {
-    content: contentReducer
+    entity: entityReducer,
+    attribute: attributeReducer,
+    tableData: tableDataReducer
   },
 });
