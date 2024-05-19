@@ -27,8 +27,6 @@ This project is a very basic headless CMS with CRUD functionality. It allows you
 1. **Clone the repository**:
    ```sh
    git clone https://github.com/vishal739/Content-Management-System-for-mySQL.git
-   cd frontend -> for frontend
-   cd backend -> backend
    ```
 
 2. **Install dependencies**:
