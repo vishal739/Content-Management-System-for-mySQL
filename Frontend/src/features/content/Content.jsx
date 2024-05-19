@@ -204,6 +204,7 @@ function Content() {
       <div>
         <h2>Create Entity</h2>
         <input
+          className='entityInput'
           type="text"
           placeholder="Entity Name"
           value={entityName}
@@ -231,6 +232,7 @@ function Content() {
                 <div>
                   <h2>Update Name</h2>
                   <input
+                    className='entityInput'
                     type="text"
                     placeholder="Entity Name"
                     value={updateEntityName}
